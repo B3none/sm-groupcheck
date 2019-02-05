@@ -1,6 +1,4 @@
 #include <sourcemod>
-#include <sdktools>
-#include <clientprefs>
 #include <SteamWorks>
 
 #pragma semicolon 1
