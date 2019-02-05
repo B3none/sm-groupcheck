@@ -60,10 +60,10 @@ public int OnInfoReceived(Handle request, bool failure, bool requestSuccessful, 
 {
 	DataPack pack = view_as<DataPack>(data);
 	pack.Reset();
-	char sUserId[64];
-	pack.ReadString(sUserId, sizeof(sUserId));
+	char UserId[64];
+	pack.ReadString(UserId, sizeof(UserId));
 
-	int client = GetClientOfUserId(StringToInt(sUserId));
+	int client = GetClientOfUserId(StringToInt(UserId));
 
 	int len = 0;
 	SteamWorks_GetHTTPResponseBodySize(request, len);
