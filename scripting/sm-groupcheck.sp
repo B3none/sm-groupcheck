@@ -17,10 +17,10 @@ public Plugin myinfo = {
 
 public void OnPluginStart() 
 {
-    RegConsoleCmd("sm_check", Cmd_Check);
+    RegConsoleCmd("sm_groupcheck", GroupCheck);
 }
 
-public Action Cmd_Check(int client, any args)
+public Action GroupCheck(int client, any args)
 {
 	if(g_bIsMember[client]) 
 	{
@@ -41,10 +41,10 @@ public void GetGroupStatus(int client)
 	char requestUrl[128];
 	Format(requestUrl, sizeof(requestUrl), "%s/v1/group-checker/%s", g_sURL, sAuth64);
 
-	Handle request = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, requestUrl);
+	Handle request = SteamWorks_CreateHTTPRequest(k_EHTTPMethodGET, requestUrl);
 	if (request == INVALID_HANDLE) {
-		LogError("[group checker] Failed to create HTTP POST request using url: %s", requestUrl);
-		PrintToConsole(client, "failed to create request");
+		LogError("[SM] Groupcheck failed to create HTTP GET request using url: %s", requestUrl);
+		PrintToConsole(client, "[SM] Groupcheck failed to create HTTP GET request using url: %s", requestUrl);
 		return;
 	}
 
