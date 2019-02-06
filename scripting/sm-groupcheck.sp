@@ -1,10 +1,12 @@
 #include <sourcemod>
-#include <SteamWorks>
+#include <ripext>
 
 #pragma semicolon 1
 #pragma newdecls required
 
 static char g_sURL[] = "https://api.gamssi.com";
+HTTPClient httpClient;
+
 bool g_bIsMember[MAXPLAYERS + 1];
 
 Handle fw_OnGroupCheck = null;
@@ -17,11 +19,13 @@ public Plugin myinfo = {
     url = "https://github.com/b3none"
 };
 
-public void OnPluginStart() 
+public void OnPluginStart()
 {
-    RegConsoleCmd("sm_groupcheck", GroupCheck);
-    
-    fw_OnGroupCheck = CreateGlobalForward("GroupCheck_OnGroupCheck", ET_Ignore, Param_Cell, Param_Cell);
+	RegConsoleCmd("sm_groupcheck", GroupCheck);
+	
+	httpClient = new HTTPClient(g_sURL);
+	
+	fw_OnGroupCheck = CreateGlobalForward("GroupCheck_OnGroupCheck", ET_Ignore, Param_Cell, Param_Cell);
 }
 
 public Action GroupCheck(int client, any args)
@@ -39,48 +43,39 @@ public void GetGroupStatus(int client)
 	char sAuth64[64];
 	GetClientAuthId(client, AuthId_SteamID64, sAuth64, sizeof(sAuth64));
 
-	char sUserId[64];
-	IntToString(GetClientUserId(client), sUserId, sizeof(sUserId));
+	char Endpoint[128];
+	Format(Endpoint, sizeof(Endpoint), "/v1/group-checker/%s", sAuth64);
 
-	char requestUrl[128];
-	Format(requestUrl, sizeof(requestUrl), "%s/v1/group-checker/%s", g_sURL, sAuth64);
-
-	Handle request = SteamWorks_CreateHTTPRequest(k_EHTTPMethodGET, requestUrl);
-	if (request == INVALID_HANDLE) 
-	{
-		LogError("[SM] Groupcheck failed to create HTTP GET request using url: %s", requestUrl);
-		PrintToConsole(client, "[SM] Groupcheck failed to create HTTP GET request using url: %s", requestUrl);
-		return;
-	}
-
-	DataPack pack = new DataPack();
-	pack.WriteString(sUserId);
-
-	SteamWorks_SetHTTPCallbacks(request, OnInfoReceived);
-	SteamWorks_SetHTTPRequestContextValue(request, pack);
-	SteamWorks_SendHTTPRequest(request);
+	httpClient.Get(Endpoint, OnGroupCheckRecieved, client);
 }
 
-public int OnInfoReceived(Handle request, bool failure, bool requestSuccessful, EHTTPStatusCode statusCode, Handle data)
+public void OnGroupCheckRecieved(HTTPResponse response, int client)
 {
-	DataPack pack = view_as<DataPack>(data);
-	pack.Reset();
-	char UserId[64];
-	pack.ReadString(UserId, sizeof(UserId));
+    if(response.Status != HTTPStatus_OK)
+    {
+        // The endpoint did not return a 200
+        LogError("[SM] The Groupcheck web enpoint did not return a 200");
+        PrintToConsole(client, "[SM] The Groupcheck web enpoint did not return a 200");
+        
+        return;
+    }
+    
+    if(response.Data == null) 
+    {
+        // Invalid JSON response
+        LogError("[SM] The Groupcheck web enpoint did not return valid JSON");
+        PrintToConsole(client, "[SM] The Groupcheck web enpoint did not return valid JSON");
+        
+        return;
+    }
 
-	int client = GetClientOfUserId(StringToInt(UserId));
+    // Indicate that the response is a JSON object
+    JSONObject data = view_as<JSONObject>(response.Data);
 
-	int length = 0;
-	SteamWorks_GetHTTPResponseBodySize(request, length);
-	char[] response = new char[length];
-	SteamWorks_GetHTTPResponseBodyData(request, response, length);
-	
-	// Horrible hack because working with JSON in sourcepawn makes me want to gauge my eyes out.
-	bool b_IsMember = StrContains(response, "grantAccess\":true") != -1;
-	
-	OnGroupCheck(client, b_IsMember);
-
-	delete pack;
+    bool b_IsMember = data.GetBool("grantAccess");
+    g_bIsMember[client] = b_IsMember;
+    
+    OnGroupCheck(client, b_IsMember);
 }
 
 void OnGroupCheck(int client, bool IsMember)
