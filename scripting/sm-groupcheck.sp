@@ -33,6 +33,7 @@ public Action GroupCheck(int client, any args)
 {
 	if (g_bIsMember[client]) 
 	{
+		OnGroupCheck(client, true);
 		return;
 	}
 
