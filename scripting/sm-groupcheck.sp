@@ -79,12 +79,12 @@ public void OnGroupCheckRecieved(HTTPResponse response, int client)
     OnGroupCheck(client, b_IsMember);
 }
 
-void OnGroupCheck(int client, bool IsMember)
+void OnGroupCheck(int client, bool isMember)
 {
 	Call_StartForward(fw_OnGroupCheck);
 	
 	Call_PushCell(client);
-	Call_PushCell(IsMember);
+	Call_PushCell(isMember);
 	
 	Call_Finish();
 }
