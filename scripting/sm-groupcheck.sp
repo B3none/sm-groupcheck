@@ -11,7 +11,8 @@ bool g_bIsMember[MAXPLAYERS + 1];
 
 Handle fw_OnGroupCheck = null;
 
-public Plugin myinfo = {
+public Plugin myinfo =
+{
     name = "[SM] GroupCheck",
     author = "B3none",
     description = "Steam groupcheck plugin.",
@@ -30,7 +31,7 @@ public void OnPluginStart()
 
 public Action GroupCheck(int client, any args)
 {
-	if(g_bIsMember[client]) 
+	if (g_bIsMember[client]) 
 	{
 		return;
 	}
@@ -51,7 +52,7 @@ public void GetGroupStatus(int client)
 
 public void OnGroupCheckRecieved(HTTPResponse response, int client)
 {
-    if(response.Status != HTTPStatus_OK)
+    if (response.Status != HTTPStatus_OK)
     {
         // The endpoint did not return a 200
         LogError("[SM] The Groupcheck web enpoint did not return a 200");
@@ -60,7 +61,7 @@ public void OnGroupCheckRecieved(HTTPResponse response, int client)
         return;
     }
     
-    if(response.Data == null) 
+    if (response.Data == null) 
     {
         // Invalid JSON response
         LogError("[SM] The Groupcheck web enpoint did not return valid JSON");
